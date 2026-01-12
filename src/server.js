@@ -47,9 +47,13 @@ app.use(express.json());
 const PUBLIC_PATHS = [
     '/login.html',
     '/login',
+    '/index.html',
+    '/',
     '/api/auth/login',
     '/api/auth/verify',
-    '/api/health'
+    '/api/health',
+    '/css/styles.css',
+    '/js/app.js'
 ];
 
 // Middleware de autenticação para APIs
@@ -70,54 +74,11 @@ function authMiddleware(req, res, next) {
     next();
 }
 
-// Middleware global para proteger TODAS as rotas e arquivos estáticos
-app.use((req, res, next) => {
-    // Permitir rotas públicas
-    if (PUBLIC_PATHS.includes(req.path)) {
-        return next();
-    }
-    
-    // Verificar token no header Authorization
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    // Para requisições de API, exigir token
-    if (req.path.startsWith('/api/')) {
-        if (!token) {
-            return res.status(401).json({ success: false, error: 'Token não fornecido' });
-        }
-        const user = authService.validateSession(token);
-        if (!user) {
-            return res.status(401).json({ success: false, error: 'Sessão inválida ou expirada' });
-        }
-        req.user = user;
-        return next();
-    }
-    
-    // Para arquivos estáticos e páginas, verificar token via query string ou redirecionar
-    // O frontend envia o token via query param para arquivos estáticos
-    const queryToken = req.query.token;
-    const finalToken = token || queryToken;
-    
-    if (!finalToken) {
-        return res.redirect('/login.html');
-    }
-    
-    const user = authService.validateSession(finalToken);
-    if (!user) {
-        return res.redirect('/login.html');
-    }
-    
-    req.user = user;
-    next();
-});
-
-// Servir arquivos estáticos (protegidos pelo middleware acima)
+// Servir arquivos estáticos
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Rota raiz
 app.get('/', (req, res) => {
-    // Já passou pelo middleware de autenticação
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
