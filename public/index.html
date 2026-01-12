@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Recargas 1.0 - Lovable Automation</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos específicos do Painel de Recargas */
+        .remix-config-panel {
+            max-width: 500px;
+        }
+
+        .required-field::after {
+            content: ' *';
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        .field-error {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 11px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .iteration-counter {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .counter-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .counter-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .counter-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .counter-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .counter-display {
+            width: 80px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-primary);
+            border-radius: var(--border-radius-sm);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .counter-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .progress-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .progress-counter {
+            font-size: 14px;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .progress-bar-container {
+            height: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), #4ade80);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-indicator.running {
+            background: var(--info);
+            animation: pulse 1s infinite;
+        }
+
+        .status-indicator.completed {
+            background: var(--success);
+        }
+
+        .status-indicator.error {
+            background: var(--error);
+        }
+
+        .iterations-list {
+            margin-top: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .iteration-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .iteration-item.completed {
+            border-left: 3px solid var(--success);
+        }
+
+        .iteration-item.current {
+            border-left: 3px solid var(--info);
+            background: var(--info-bg);
+        }
+
+        .iteration-number {
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 30px;
+        }
+
+        .iteration-name {
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .iteration-status {
+            font-size: 12px;
+        }
+
+        .main-content-remix {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            padding: 20px 24px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .quick-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .preset-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .remix-stats-bar {
+            display: flex;
+            gap: 16px;
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .remix-stat {
+            flex: 1;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .remix-stat-value {
+            display: block;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .remix-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .remix-stat.target .remix-stat-value { color: var(--info); }
+        .remix-stat.completed .remix-stat-value { color: var(--success); }
+        .remix-stat.credits .remix-stat-value { color: #f59e0b; }
+        .remix-stat.status .remix-stat-value { 
+            font-size: 14px;
+            color: var(--warning); 
+        }
+
+        /* Estilos para botões de salvar individual */
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .input-row .input-with-icon {
+            flex: 1;
+        }
+
+        .save-field-btn {
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .save-field-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .save-field-btn.saved {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .save-field-btn.saved:hover {
+            background: #16a34a;
+        }
+
+        .field-status {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .field-status.saved {
+            color: var(--success);
+        }
+    </style>
+</head>
+<body style="display: none;">
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="logo-icon">💰</span>
+                    <span class="logo-text">Painel de Recargas 1.0</span>
+                </div>
+                <span class="subtitle">Lovable Automation</span>
+            </div>
+            <div class="header-right">
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <span id="userName" style="color: var(--text-secondary); font-size: 13px; margin-right: 12px;">👤 Usuário</span>
+                    <button class="btn btn-sm btn-secondary" id="logoutBtn" style="padding: 6px 12px;">Sair</button>
+                </div>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Conectando...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="remix-stats-bar">
+            <div class="remix-stat target">
+                <span class="remix-stat-value" id="statTarget">0</span>
+                <span class="remix-stat-label">Meta de Repetições</span>
+            </div>
+            <div class="remix-stat completed">
+                <span class="remix-stat-value" id="statCompleted">0</span>
+                <span class="remix-stat-label">Concluídas</span>
+            </div>
+            <div class="remix-stat credits">
+                <span class="remix-stat-value" id="statCredits">0</span>
+                <span class="remix-stat-label">💰 Créditos Enviados</span>
+            </div>
+            <div class="remix-stat status">
+                <span class="remix-stat-value" id="statStatus">Aguardando</span>
+                <span class="remix-stat-label">Status</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content-remix">
+            <!-- Left Panel - Config -->
+            <section class="panel remix-config-panel">
+                <div class="panel-header">
+                    <h2>⚙️ Configuração da Recarga</h2>
+                </div>
+                <div class="panel-content">
+                    <!-- Credentials Section -->
+                    <div class="form-group">
+                        <label for="remixEmail" class="required-field">E-mail da Conta Lovable</label>
+                        <div class="input-row">
+                            <div class="input-with-icon">
+                                <span class="input-icon">📧</span>
+                                <input type="email" id="remixEmail" placeholder="seu@email.com" required />
+                            </div>
+                            <button type="button" class="save-field-btn" id="saveEmailBtn" title="Salvar e-mail">💾</button>
+                        </div>
+                        <span class="error-message" id="emailError">E-mail é obrigatório</span>
+                        <span class="field-status" id="emailStatus"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="remixPassword" class="required-field">Senha da Conta</label>
+                        <div class="input-row">
+                            <div class="input-with-icon">
+                                <span class="input-icon">🔒</span>
+                                <input type="password" id="remixPassword" placeholder="Sua senha do Lovable" required />
+                            </div>
+                            <button type="button" class="save-field-btn" id="savePasswordBtn" title="Salvar senha">💾</button>
+                        </div>
+                        <span class="error-message" id="passwordError">Senha é obrigatória</span>
+                        <span class="field-status" id="passwordStatus"></span>
+                    </div>
+
+                    <!-- Project URL -->
+                    <div class="form-group">
+                        <label for="projectUrl" class="required-field">URL do Projeto (para Remix)</label>
+                        <div class="input-row">
+                            <div class="input-with-icon">
+                                <span class="input-icon">🔗</span>
+                                <input type="text" id="projectUrl" placeholder="https://lovable.dev/projects/..." required />
+                            </div>
+                            <button type="button" class="save-field-btn" id="saveUrlBtn" title="Salvar URL">💾</button>
+                        </div>
+                        <span class="error-message" id="urlError">URL do projeto é obrigatória</span>
+                        <span class="field-status" id="urlStatus"></span>
+                        <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                            Cole aqui o link do projeto que será remixado
+                        </small>
+                    </div>
+
+                    <!-- Base Name -->
+                    <div class="form-group">
+                        <label for="baseName">Nome Base (para alteração)</label>
+                        <div class="input-row">
+                            <div class="input-with-icon">
+                                <span class="input-icon">📝</span>
+                                <input type="text" id="baseName" placeholder="MeuProjeto" value="STORE" />
+                            </div>
+                            <button type="button" class="save-field-btn" id="saveBaseNameBtn" title="Salvar nome base">💾</button>
+                        </div>
+                        <span class="field-status" id="baseNameStatus"></span>
+                        <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                            O nome será incrementado: STORE2, STORE3, STORE4...
+                        </small>
+                    </div>
+
+                    <!-- Iteration Counter -->
+                    <div class="form-group">
+                        <label class="required-field">Número de Repetições (Remix + Publish + Renomear)</label>
+                        <div class="iteration-counter">
+                            <div class="counter-controls">
+                                <button class="counter-btn" id="decreaseBtn">−</button>
+                                <div class="counter-display" id="repeatCountDisplay">5</div>
+                                <button class="counter-btn" id="increaseBtn">+</button>
+                            </div>
+                            <span class="counter-label">vezes</span>
+                        </div>
+                        <div class="quick-presets">
+                            <button class="preset-btn" data-value="1">1x</button>
+                            <button class="preset-btn" data-value="5">5x</button>
+                            <button class="preset-btn" data-value="10">10x</button>
+                            <button class="preset-btn" data-value="25">25x</button>
+                            <button class="preset-btn" data-value="50">50x</button>
+                            <button class="preset-btn" data-value="100">100x</button>
+                        </div>
+                    </div>
+
+                    <!-- Headless -->
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="headlessMode" />
+                            Modo Headless (sem janela visível)
+                        </label>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="btn-group" style="margin-top: 24px;">
+                        <button class="btn btn-success" id="startBtn">▶️ Iniciar Automação</button>
+                        <button class="btn btn-danger" id="stopBtn" disabled>⏹️ Parar</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel - Progress & Log -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>📊 Progresso</h2>
+                </div>
+                <div class="panel-content">
+                    <!-- Progress Section -->
+                    <div class="progress-section">
+                        <div class="progress-header">
+                            <span class="progress-title">Progresso da Automação</span>
+                            <span class="progress-counter" id="progressCounter">0 / 0</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <div class="progress-status">
+                            <span class="status-indicator" id="statusIndicator"></span>
+                            <span id="currentStep">Aguardando início...</span>
+                        </div>
+
+                        <!-- Iterations List -->
+                        <div class="iterations-list" id="iterationsList">
+                            <!-- Items will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Activity Log -->
+                    <div class="panel-header" style="margin-top: 20px; padding: 12px 0; border: none; background: transparent;">
+                        <h2>📋 Log de Atividades</h2>
+                        <button class="btn btn-sm btn-secondary" id="clearLogBtn">Limpar</button>
+                    </div>
+                    <div class="log-container" id="logContainer" style="max-height: 300px;">
+                        <div class="log-entry info">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-message">Aguardando início da automação...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <span>Painel de Recargas 1.0 - Lovable Automation</span>
+            <span id="footerTime"></span>
+        </footer>
+    </div>
+
+    <script>
+        // Verificar autenticação ANTES de qualquer coisa
+        (function() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                window.location.replace('/login.html');
+                document.body.style.display = 'none';
+                return;
+            }
+            
+            // Verificar token no servidor
+            fetch('/api/auth/verify', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Token inválido');
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.user) {
+                    document.getElementById('userName').textContent = `👤 ${data.user.name || data.user.username}`;
+                    document.getElementById('userInfo').style.display = 'flex';
+                    document.body.style.display = '';
+                } else {
+                    throw new Error('Usuário não encontrado');
+                }
+            })
+            .catch(() => {
+                localStorage.removeItem('auth_token');
+                window.location.replace('/login.html');
+            });
+        })();
+    </script>
+    <script src="js/app.js"></script>
+</body>
+</html>
